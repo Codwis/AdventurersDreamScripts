@@ -4,6 +4,7 @@ using System.Runtime.Serialization.Formatters.Binary;
 using UnityEngine.Rendering;
 using System.Collections.Generic;
 using UnityEditor;
+using System;
 
 public static class SaveSystem
 {
@@ -19,30 +20,45 @@ public static class SaveSystem
         StatsData statsData = new StatsData(stats.health, stats.maxHealth, stats.maxStamina);
 
         EquipmentSlot[] eqSlots = inventory.GetComponentsInChildren<EquipmentSlot>();
-        ItemInSlot[] items = new ItemInSlot[inventory.usedSlots.Count + Inventory.instance.bags.Length + eqSlots.Length];
+
+        ItemSaveData[] items = new ItemSaveData[inventory.usedSlots.Count + Inventory.instance.bags.Length + eqSlots.Length];
+
         int[] amounts = new int[items.Length];
         int count = 0;
         BagScript[] bags = inventory.bags;
+
         foreach(BagScript bag in bags)
         {
             if (bag.GetComponent<ContainerScript>()) continue;
 
-            ItemInSlot temp = new ItemInSlot();
-            temp.item = bag.currentBag;
+            if (bag.currentBag == null) continue;
+
+            ItemInSlot tempItem = new ItemInSlot();
+            tempItem.item = bag.currentBag;
+
+            ItemSaveData temp = new ItemSaveData(tempItem, bag.bagSlot);
+
             items[count] = temp;
             count++;
         }
+
         foreach(EquipmentSlot eqSl in inventory.GetComponentsInChildren<EquipmentSlot>())
         {
-            items[count] = eqSl.itemInSlot;
+            if (eqSl.itemInSlot.item == null) continue;
+            ItemSaveData itemData = new ItemSaveData(eqSl.itemInSlot, eqSl);
+            Debug.Log(eqSl.name);
+            items[count] = itemData;
             count++;
         }
+
         foreach(Slot slo in inventory.usedSlots)
         {
-            items[count] = slo.itemInSlot;
+            ItemSaveData itemData = new ItemSaveData(slo.itemInSlot, slo);
+            items[count] = itemData;
             amounts[count] = slo.GetItemAmount();
             count++;
         }
+
         InventoryData invData = new InventoryData(items, amounts);
 
         PlayerQuestHandler handler = stats.GetComponentInChildren<PlayerQuestHandler>();
@@ -63,8 +79,20 @@ public static class SaveSystem
         File.WriteAllText(path, json);
 
         path = Application.persistentDataPath + "/containers.json";
-        ContainerUnit[] containers = Object.FindObjectsByType<ContainerUnit>(FindObjectsSortMode.InstanceID);
-        ContainerData contData = new ContainerData(containers);
+        ContainerUnit[] containers = UnityEngine.Object.FindObjectsByType<ContainerUnit>(FindObjectsSortMode.InstanceID);
+        ContainerData contData = new ContainerData(containers, Gamemanager.newGame);
+
+        json = JsonUtility.ToJson(contData);
+
+        File.WriteAllText(path, json);
+    }
+
+    public static void SaveContainers()
+    {
+        string path, json;
+        path = Application.persistentDataPath + "/containers.json";
+        ContainerUnit[] containers = UnityEngine.Object.FindObjectsByType<ContainerUnit>(FindObjectsSortMode.InstanceID);
+        ContainerData contData = new ContainerData(containers, Gamemanager.newGame);
 
         json = JsonUtility.ToJson(contData);
 
@@ -129,19 +157,14 @@ public static class SaveSystem
             string json = File.ReadAllText(path);
             ContainerData contData = JsonUtility.FromJson<ContainerData>(json);
             int i = 0;
-            foreach (ContainerUnit container in contData.cu)
-            {
-                if (container == null) continue;
 
-                if (container.containerId.Equals(id))
+            foreach (ContainerItemData container in contData.items)
+            {
+                if (container.contId.Equals(id))
                 {
-                    if (contData.cu[i] != null)
-                    {
-                        ti = new ItemCont[contData.cu[i].items.Count];
-                        Debug.Log("holyyy");
-                        ti = contData.cu[i].items.ToArray();
-                        return;
-                    }
+
+                    ti = container.items;
+                    return;
 
                 }
                 i++;
@@ -149,5 +172,18 @@ public static class SaveSystem
         }
 
         ti = null;
+    }
+}
+
+[Serializable]
+public class ItemSaveData
+{
+    public ItemInSlot item;
+    public Slot slotType;
+
+    public ItemSaveData(ItemInSlot itemIn, Slot slot)
+    {
+        item = itemIn;
+        slotType = slot;
     }
 }

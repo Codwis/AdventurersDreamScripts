@@ -91,6 +91,12 @@ public class AIController : MonoBehaviour
 
     private void FixedUpdate()
     {
+
+        if(currentSpot == null && targetHead != null)
+        {
+            targetHead = null;
+        }
+
         agent.isStopped = false;
         if(lookOfInterest != null)
         {
@@ -167,6 +173,7 @@ public class AIController : MonoBehaviour
             if(currentSpot.gameObject.layer == LayerMask.NameToLayer("Dead"))
             {
                 currentSpot = null;
+                targetHead = null;
                 chasing = false;
             }
             else if (CheckForDistance() <= info.agroRange)

@@ -114,6 +114,7 @@ public class QuestGiver : Talkable
                 textToSay[0].text = questToGive.afterQuestText;
             }
 
+            handler.transform.root.GetComponent<PlayerController>().Save();
 
             handler.transform.root.GetComponentInChildren<DialogueHandler>().DisplayText(name, questToGive.questCompleteDialogue);
 
@@ -123,6 +124,14 @@ public class QuestGiver : Talkable
                 foreach (RewardItem item in questToGive.rewardItems)
                 {
                     handler.transform.root.GetComponentInChildren<Inventory>().AddItem(item.item, item.amount);
+                }
+            }
+
+            if(questToGive.thingsToSpawnAfterCompletion != null)
+            {
+                foreach(GameObject obj in questToGive.thingsToSpawnAfterCompletion)
+                {
+                    Instantiate(obj);
                 }
             }
             

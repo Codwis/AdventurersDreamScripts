@@ -37,10 +37,10 @@ public class StatsData
 [System.Serializable]
 public class InventoryData
 {
-    public ItemInSlot[] items;
+    public ItemSaveData[] items;
     public int[] itemNums;
     public int[] amount;
-    public InventoryData(ItemInSlot[] playerItems, int[] amounts)
+    public InventoryData(ItemSaveData[] playerItems, int[] amounts)
     {
         items = playerItems;
         amount = amounts;
@@ -62,21 +62,41 @@ public class QuestData
 public class ContainerData
 {
     public Transform[] containerPos;
-    public ContainerUnit[] cu;
+    public ContainerItemData[] items;
 
-    public ContainerData(ContainerUnit[] units)
+    public ContainerData(ContainerUnit[] units, bool newGame)
     {
+        items = new ContainerItemData[units.Length];
 
-        cu = new ContainerUnit[units.Length];
         for(int i = 0; i < units.Length; i++)
         {
-            cu[i] = units[i];
-        }
-        containerPos = new Transform[cu.Length];
+            ContainerItemData temp = new ContainerItemData();
+            items[i] = temp;
 
-        for(int i = 0; i < cu.Length; i++)
+            if (units[i].items == null)
+            {
+                items[i].items = null;
+            }
+            else
+            {
+                items[i].items = units[i].items.ToArray();
+            }
+
+            items[i].contId = units[i].containerId;
+        }
+
+        containerPos = new Transform[units.Length];
+
+        for(int i = 0; i < units.Length; i++)
         {
-            containerPos[i] = cu[i].transform;
+            containerPos[i] = units[i].transform;
         }
     }
+}
+
+[System.Serializable]
+public class ContainerItemData
+{
+    public ulong contId;
+    public ItemCont[] items;
 }

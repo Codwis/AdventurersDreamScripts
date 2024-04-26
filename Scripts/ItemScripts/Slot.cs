@@ -20,10 +20,13 @@ public class Slot : MonoBehaviour
     {
         containerScript = GetComponentInParent<ContainerScript>();
         itemAmountText = GetComponentInChildren<Text>();
-        inventory = GetComponentInParent<Inventory>();
 
         if(itemLogo == null) itemLogo = GetComponent<Image>();
         ogSprite = itemLogo.sprite;
+    }
+    private void Start()
+    {
+        inventory = Inventory.instance;
     }
 
     public virtual int TryAddItem(ItemInSlot item, int amount, bool switching = false) //Returns amount leftover 
@@ -97,7 +100,7 @@ public class Slot : MonoBehaviour
         }
     }
 
-    public void EmptySlot(bool dropItem = false, bool containerClose = false) //Empties the slot surprisisingly useful
+    public virtual void EmptySlot(bool dropItem = false, bool containerClose = false) //Empties the slot surprisisingly useful
     {
         if (itemInSlot == null) return;
 

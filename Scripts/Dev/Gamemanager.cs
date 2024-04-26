@@ -29,6 +29,7 @@ public class Gamemanager : MonoBehaviour
     [HideInInspector] public bool first = true;
     public static Gamemanager instance;
     private bool queue = false;
+
     private void Awake()
     {
         vol = moodSource.volume;
@@ -37,9 +38,13 @@ public class Gamemanager : MonoBehaviour
             instance = this;
         }
 
-        loadSliderCanvas = loadSlider.GetComponentInParent<CanvasGroup>();
+        if(loadSlider != null)
+        {
+            loadSliderCanvas = loadSlider.GetComponentInParent<CanvasGroup>();
+            loadingText = loadSlider.GetComponentInChildren<Text>();
+        }
+
         QualitySettings.vSyncCount = 0;
-        loadingText = loadSlider.GetComponentInChildren<Text>();
     }
 
     private void Update()

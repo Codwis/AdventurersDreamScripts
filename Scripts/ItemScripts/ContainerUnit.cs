@@ -4,6 +4,7 @@ using System.Collections.Generic;
 using UnityEditor;
 using UnityEngine;
 
+[Serializable]
 public class ContainerUnit : Interactable
 {
      [Tooltip("Items in container")] public List<ItemCont> items = new List<ItemCont>();
@@ -13,26 +14,42 @@ public class ContainerUnit : Interactable
     public static int cuCount = 0;
     private void Start()
     {
+       
         containerId = (ulong)cuCount;
         cuCount++;
+
+        if (!Gamemanager.newGame)
+        {
+            ItemCont[] tempItems;
+            SaveSystem.LoadContainer(containerId, out tempItems);
+            items = new List<ItemCont>();
+
+            foreach (ItemCont item in tempItems) items.Add(item); 
+        }
     }
     //When gets interacted it opens the container and transfers items to containerscript and displays the container
     public override void Interact(Transform source) 
     {
         if (locked) return;
         if (Inventory.instance.menu.interactable) return;
+
         base.Interact(source);
         ItemCont[] temp;
-        SaveSystem.LoadContainer(containerId, out temp);
 
-        if (temp != null)
+        if(!Gamemanager.newGame || source.GetComponent<PlayerController>().devLoadGame)
         {
-            items = new List<ItemCont>();
-            foreach(ItemCont ite in temp)
+            SaveSystem.LoadContainer(containerId, out temp);
+
+            if (temp != null)
             {
-                items.Add(ite);
+                items = new List<ItemCont>();
+                foreach (ItemCont ite in temp)
+                {
+                    items.Add(ite);
+                }
             }
         }
+        
         if(ContainerScript.instance.current == null)
         {
             ContainerScript.instance.OpenStorage(this);

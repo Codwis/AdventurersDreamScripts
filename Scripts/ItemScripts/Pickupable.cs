@@ -1,3 +1,4 @@
+using System;
 using System.Collections;
 using System.Collections.Generic;
 using UnityEngine;
@@ -6,7 +7,7 @@ public class Pickupable : Interactable
 {
     public ItemInSlot itemToPickup;
     public int amount;
-    public bool pickedUp = false;
+    [NonSerialized] public bool pickedUp = false;
     public override void Interact(Transform source)
     {
         if(!pickedUp)

@@ -170,26 +170,6 @@ public class DialogueHandler : MonoBehaviour
                 questGiver = null;
             }
 
-            if (currentText[currentIndex - 1].thingToSummon != null)
-            {
-                GameObject obj = Instantiate(currentText[currentIndex - 1].thingToSummon, null);
-                PlayerQuestHandler handler = transform.root.GetComponentInChildren<PlayerQuestHandler>();
-                if(obj.TryGetComponent<SquadClearHandler>(out SquadClearHandler cl))
-                {
-                    if(cl.quest)
-                    {
-                        cl.ambushQuest = handler.currentQuests[handler.currentQuests.Count - 1].quest;
-                    }
-                }
-            }
-
-            if (currentText[currentIndex - 1].customName != "")
-            {
-                if (currentText[currentIndex - 1].customName != talkerNameBox.text)
-                {
-                    talkerNameBox.text = currentText[currentIndex - 1].customName;
-                }
-            }
             Cursor.visible = false;
             return;
         }
@@ -218,6 +198,20 @@ public class DialogueHandler : MonoBehaviour
             if (!canDisplay) currentIndex++;
         }
 
+        if (currentText[currentIndex].thingToSummon != null)
+        {
+            GameObject obj = Instantiate(currentText[currentIndex].thingToSummon, null);
+
+            PlayerQuestHandler handler = transform.root.GetComponentInChildren<PlayerQuestHandler>();
+            if (obj.TryGetComponent<SquadClearHandler>(out SquadClearHandler cl))
+            {
+                if (cl.quest)
+                {
+                    cl.ambushQuest = handler.currentQuests[handler.currentQuests.Count - 1].quest;
+                }
+            }
+        }
+
         if (currentText[currentIndex].itemToGive != null)
         {
             if (currentText[currentIndex].itemToGive.item != null)
@@ -226,6 +220,7 @@ public class DialogueHandler : MonoBehaviour
                 inv.AddItem(currentText[currentIndex].itemToGive, 1);
             }
         }
+
         if (currentText[currentIndex].reactionName != null)
         {
             if (currentText[currentIndex].reactionName != "")

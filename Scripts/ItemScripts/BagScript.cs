@@ -17,8 +17,10 @@ public class BagScript : MonoBehaviour
     private RectTransform rectTransform;
     private CanvasGroup group;
 
+    [NonSerialized] public BagSlot bagSlot;
     private void Start()
     {
+        bagSlot = GetComponentInParent<BagSlot>();
         inventory = Inventory.instance;
 
         rectTransform = GetComponent<RectTransform>();

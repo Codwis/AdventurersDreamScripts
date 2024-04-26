@@ -64,13 +64,22 @@ public class Inventory : MonoBehaviour
         if (settings == null) return;
         if (Input.GetKeyDown((KeyCode)PlayerPrefs.GetInt("Menu")))
         {
-            if(menu.interactable)
+            if (InteractableUiHandler.instance.open)
+            {
+                InteractableUiHandler.instance.HideUi();
+            }
+
+            if (menu.interactable)
             {
                 playerController.Pause(true);
                 AllowUi(true);
+
                 menu.interactable = false;
                 menu.alpha = 0;
                 menu.blocksRaycasts = false;
+
+                equipmentOpen = false;
+                bagsOpen = false;
 
                 if (!equipmentOpen && !bagsOpen) //if either menu is open then hide cursor
                 {
@@ -89,6 +98,12 @@ public class Inventory : MonoBehaviour
                 playerController.Pause(false);
                 ContainerScript.instance.CloseStorage();
 
+                equipmentOpen = false;
+                bagsOpen = false;
+
+                OpenBags(false);
+                characterEquipmentMenu.CloseOpen(false);
+
                 menu.interactable = true;
                 menu.alpha = 1;
                 menu.blocksRaycasts = true;
@@ -101,7 +116,9 @@ public class Inventory : MonoBehaviour
         }
         if (Input.GetKeyDown((KeyCode)PlayerPrefs.GetInt("Bags")) && allowUi) //B is pressed it tries opening each bag
         {
+            if (bags[0].currentBag == null) return;
             if (bags.Length < 1) return;
+
             bagsOpen = !bagsOpen;
 
             if (!equipmentOpen && !bagsOpen) //if either menu is open then hide cursor
@@ -209,14 +226,26 @@ public class Inventory : MonoBehaviour
 
     public void OpenBags(bool open)
     {
-        if (bags[0].GetCurrentBag() != null)
+        bool hasBag = false;
+
+        foreach (BagScript bag in bags)
         {
-            bagsOpen = open;
-            foreach (BagScript bag in bags)
+            if(bag.currentBag != null)
             {
+                hasBag = true;
                 bag.OpenCloseBag(open);
             }
         }
+
+        if(!hasBag)
+        {
+            bagsOpen = false;
+        }
+        else
+        {
+            bagsOpen = open;
+        }
+
         if(!bagsOpen)
         {
             itemDescHandler.cg.alpha = 0;
@@ -489,36 +518,44 @@ public class Inventory : MonoBehaviour
 
         if (data == null) return;
 
-        bool no = false;
-
         EquipmentSlot[] t = GetComponentsInChildren<EquipmentSlot>();
-        foreach (ItemInSlot sl in data.items)
+
+        if (data.items == null) return;
+
+        foreach(ItemSaveData savedItem in data.items)
         {
-            if(sl.item is Equipment eq)
+            if (savedItem.item.item == null) continue;
+
+            if (data.items[count].slotType is BagSlot _)
             {
-                if(eq.equipmentType != EquipmentType.bag)
-                {
-                    foreach (EquipmentSlot slot in t)
-                    {
-                        if (slot.equipmentType == eq.equipmentType && slot.itemInSlot == null)
-                        {
-                            slot.TryAddItem(sl, 1);
-                            no = true;
-                            break;
-                        }
-                    }
-                    if(!no)
-                    {
-                        AddItem(sl, 1);
-                    }
-                    no = false;
-
-                    count++;
-                    continue;
-                }
-
+                AddItem(data.items[count].item, 1);
             }
-            AddItem(sl, data.amount[count]);
+            else if (data.items[count].slotType is EquipmentSlot _)
+            {
+                Equipment eq = (Equipment)savedItem.item.item;
+
+                for(int i = 0; i < t.Length; i++)
+                {
+                    if (t[i].equipmentType == eq.equipmentType)
+                    {
+                        if (t[i].itemInSlot.item != null)
+                        {
+                            AddItem(savedItem.item, 1);
+                        }
+                        else
+                        {
+                            t[i].TryAddItem(data.items[count].item, 1);
+                        }
+                        
+                        break;
+                    }
+                }
+            }
+            else
+            {
+                AddItem(savedItem.item, 1);
+            }
+
             count++;
         }
     }

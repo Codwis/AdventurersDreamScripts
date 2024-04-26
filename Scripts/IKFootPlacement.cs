@@ -8,6 +8,7 @@ public class IKFootPlacement : MonoBehaviour
     public float distanceToGround;
     private Animator anim;
     private PlayerController playerController;
+
     private void Start()
     {
         TryGetComponent<PlayerController>(out playerController);
@@ -17,6 +18,8 @@ public class IKFootPlacement : MonoBehaviour
     {
         if (anim)
         {
+            bool alreadyChanged = false;
+
             anim.SetIKPositionWeight(AvatarIKGoal.LeftFoot, 1);
             anim.SetIKRotationWeight(AvatarIKGoal.LeftFoot, 1);
             RaycastHit hit;
@@ -25,6 +28,7 @@ public class IKFootPlacement : MonoBehaviour
             {
                 if(playerController != null)
                 {
+                    alreadyChanged = true;
                     playerController.onGround = true;
                 }
                 Vector3 footPos = hit.point;
@@ -57,7 +61,7 @@ public class IKFootPlacement : MonoBehaviour
             }
             else
             {
-                if (playerController != null)
+                if (playerController != null && !alreadyChanged)
                 {
                     playerController.onGround = false;
                 }

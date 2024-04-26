@@ -5,6 +5,7 @@ using System.ComponentModel.Design.Serialization;
 using System.Runtime.InteropServices.WindowsRuntime;
 using Unity.Netcode;
 using Unity.Services.Lobbies;
+using Unity.VisualScripting;
 using UnityEditor.Rendering;
 using UnityEngine;
 using UnityEngine.SceneManagement;
@@ -48,7 +49,6 @@ public class PlayerController : MonoBehaviour
     public bool inputsOn = false;
     public bool jumpStarted = false;
 
-
     private float startJumpTime;
     private bool canJump;
 
@@ -68,6 +68,8 @@ public class PlayerController : MonoBehaviour
     private EquipmentSlot weaponSlot;
 
     private bool equipBack = false;
+
+    public bool devLoadGame = false;
     private void Awake()
     {
         foreach (EquipmentSlot slot in GetComponentsInChildren<EquipmentSlot>())
@@ -82,6 +84,7 @@ public class PlayerController : MonoBehaviour
         Cursor.lockState = CursorLockMode.Locked;
         Cursor.visible = false;
     }
+
     private void Start()
     {
         if (cam == null)
@@ -99,12 +102,13 @@ public class PlayerController : MonoBehaviour
 
         questHandler = GetComponentInChildren<PlayerQuestHandler>();
 
-
         equipmentHandler = GetComponent<EquipmentHandler>();
 
         Inventory.instance.settings = settingsFile;
-        if (!Gamemanager.newGame)
+
+        if (!Gamemanager.newGame || devLoadGame)
         {
+            if (devLoadGame && Gamemanager.newGame) Gamemanager.newGame = false;
             StartCoroutine(Load());
         }
     }
@@ -114,14 +118,15 @@ public class PlayerController : MonoBehaviour
         questHandler = GetComponentInChildren<PlayerQuestHandler>();
         dialogueHandler = GetComponentInChildren<DialogueHandler>();
     }
+
+    private const float forwardJump = 16;
     private void Update()
     {
         if (!inputsOn)
         {
             return;
         }
-        Move(); // Moves player
-        CheckForGround(); //Checks if player is in air
+
 
         if (Input.GetKeyDown((KeyCode)PlayerPrefs.GetInt("Jump")) && canJump && !jumpStarted) // get the start jump time and add first force
         {
@@ -132,13 +137,14 @@ public class PlayerController : MonoBehaviour
             startJumpTime = Time.time;
             movementAnimator.SetTrigger("Jump");
         }
-        if (Input.GetKey((KeyCode)PlayerPrefs.GetInt("Jump")) && canJump || jumping )
+        if (Input.GetKey((KeyCode)PlayerPrefs.GetInt("Jump")) && canJump || jumping ) 
         {
+            //If holding time less than max move the character up and forward if input is given
             float temp = startJumpTime + maxJumpHoldTime - Time.time;
             if(temp > 0)
             {
                 float jumpForce = jumpStrength;
-                charController.Move(new Vector3(0, jumpForce * Time.deltaTime, 0));
+                charController.Move(new Vector3(0,jumpForce * Time.deltaTime, 0) + transform.forward * forwardJump * Time.deltaTime * verticalInput);
             }
             else
             {
@@ -175,7 +181,7 @@ public class PlayerController : MonoBehaviour
         //}
 
 
-        if (Input.GetKeyDown((KeyCode)PlayerPrefs.GetInt("Crouch"))) //Crouching just by changing scale
+        if (Input.GetKeyDown((KeyCode)PlayerPrefs.GetInt("Crouch"))) //Crouching By with animation
         {
             crouching = true;
             movementAnimator.SetBool("Crouch", true);
@@ -202,6 +208,10 @@ public class PlayerController : MonoBehaviour
                 }
             }
 
+            if(InteractableUiHandler.instance.open)
+            {
+                InteractableUiHandler.instance.HideUi();
+            }
 
             if (!dialogueHandler.IsTalking()) //if player is talking then cant interact
             {
@@ -234,6 +244,12 @@ public class PlayerController : MonoBehaviour
                 movementAnimator.SetTrigger("PutAway");
             }
         }
+    }
+
+    private void FixedUpdate()
+    {
+        Move(); // Moves player
+        CheckForGround(); //Checks if player is in air
     }
 
     private void CheckForWater()
@@ -539,7 +555,8 @@ public class PlayerController : MonoBehaviour
 
     public void Save()
     {
-        ContainerScript.instance.CloseStorage();
+        ContainerScript.instance.CloseStorage(false);
+
         Stats stat = GetComponentInParent<Stats>();
         if (stat != null)
         {
@@ -557,10 +574,18 @@ public class PlayerController : MonoBehaviour
         yield return new WaitForEndOfFrame();
         if(dat != null)
         {
-            EquipmentRarityController.LoadData();
             Inventory.instance.LoadData();
+
             questHandler.LoadData(dat.questData);
-            transform.position = new Vector3(dat.playerPosition[0], dat.playerPosition[1], dat.playerPosition[2]);
+
+            inputsOn = false;
+            charController.enabled = false;
+
+            transform.SetPositionAndRotation(new Vector3(dat.playerPosition[0], dat.playerPosition[1], dat.playerPosition[2]), transform.rotation);
         }
+
+        inputsOn = true;
+        charController.enabled = true;
     }
+
 }

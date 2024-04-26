@@ -39,6 +39,10 @@ public class EquipmentHandler : NetworkBehaviour
     [NonSerialized] public RangedScript rangedScript;
     private MeshCollider bowCol;
 
+    [Header("Magic")]
+    [Tooltip("GrimoireGpx")] public GameObject grimoireGpx;
+    private GrimoireScript grimoireScript;
+
     [Header("Misc")]
 
     [Tooltip("Mask for the player used in other scripts")] public LayerMask playerMask;
@@ -65,6 +69,11 @@ public class EquipmentHandler : NetworkBehaviour
         stats = GetComponent<Stats>();
         rangedScript.SetHandler(this);
         meleeScript.SetHandler(this);
+
+        if(!TryGetComponent<GrimoireScript>(out grimoireScript))
+        {
+            grimoireScript = gameObject.AddComponent<GrimoireScript>();
+        }
 
         audioSource = GetComponent<AudioSource>();
         animator = GetComponent<Animator>();
@@ -489,7 +498,13 @@ public class EquipmentHandler : NetworkBehaviour
                     Destroy(capeGpx);
                     capeGpx = Instantiate(nothingPrefab, parent);
                     break;
-                    
+
+                case EquipmentType.grimoire:
+                    parent = grimoireGpx.transform.parent;
+                    Destroy(grimoireGpx);
+                    grimoireGpx = Instantiate(nothingPrefab, parent);
+                    grimoireScript.UnEquip();
+                    break;
             }
 
             if (equipment is ArmorItem armor) //Add armor
@@ -575,6 +590,18 @@ public class EquipmentHandler : NetworkBehaviour
                 Destroy(capeGpx);
                 temp = Instantiate(equipment.prefab, parent);
                 capeGpx = temp;
+                break;
+
+            case EquipmentType.grimoire:
+                parent = grimoireGpx.transform.parent;
+                Destroy(grimoireGpx);
+                temp = Instantiate(equipment.prefab, parent);
+                temp.transform.SetLocalPositionAndRotation(equipment.localPosition, Quaternion.Euler(equipment.localRotation));
+                temp.transform.localScale = equipment.localScale;
+                audioSource.PlayOneShot(equipment.takeOutSound);
+
+                grimoireGpx = temp;
+                grimoireScript.Equip((Grimoire)equipment, grimoireGpx.GetComponent<SkinnedMeshRenderer>());
                 break;
         }
 

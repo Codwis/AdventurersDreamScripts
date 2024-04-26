@@ -15,6 +15,7 @@ public class Quest : ScriptableObject
     [Tooltip("What to say when quest gets completed")] public string questCompleteDialogue;
     [Tooltip("What to say after quest is like after thank you")] public string afterQuestText;
 
+    [Tooltip("What To spawn after quest is completed like a cat")] public GameObject[] thingsToSpawnAfterCompletion;
     [Tooltip("What to items to reward player with")]public RewardItem[] rewardItems;
     [Tooltip("What sequel quest should open after this leave empty if complete")] public Quest nextStep;
 

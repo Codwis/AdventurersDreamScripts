@@ -12,6 +12,7 @@ public class ContainerScript : MonoBehaviour
     [NonSerialized] public ContainerUnit current;
 
     private bool open = false;
+    private PlayerController controller;
 
     [HideInInspector] public List<ContainerUnit> containerUnitsToSave = new List<ContainerUnit>();
     private void Awake()
@@ -20,6 +21,8 @@ public class ContainerScript : MonoBehaviour
         {
             instance = this;
         }
+
+        controller = GetComponentInParent<PlayerController>();
         slots = GetComponent<BagScript>().useableSlots;
     }
 
@@ -27,12 +30,27 @@ public class ContainerScript : MonoBehaviour
     public void OpenStorage(in ContainerUnit cu)
     {
         current = cu;
-
+        int currentSlot = 0;
         if(cu.items.Count > 0) //adds the items to the slots
         {
             for (int i = 0; i < cu.items.Count; i++)
             {
-                slots[i].GetComponent<Slot>().TryAddItem(cu.items[i].item, cu.items[i].amount);
+                currentSlot = i;
+
+                int amount = cu.items[i].amount;
+
+                while(amount > cu.items[i].item.item.stackSize)
+                {
+                    slots[currentSlot].GetComponent<Slot>().TryAddItem(cu.items[i].item, cu.items[i].item.item.stackSize);
+                    amount -= cu.items[i].item.item.stackSize;
+                    currentSlot++;
+                }
+
+                if(amount > 0)
+                {
+                    slots[currentSlot].GetComponent<Slot>().TryAddItem(cu.items[i].item, amount);
+                }
+
             }
         }
 
@@ -50,15 +68,9 @@ public class ContainerScript : MonoBehaviour
     }
 
     //Close the currentStorage
-    public void CloseStorage()
+    public void CloseStorage(bool save = true)
     {
         if (!open) return;
-
-        if(containerUnitsToSave.Contains(current))
-        {
-            containerUnitsToSave.Remove(current);
-        }
-        containerUnitsToSave.Add(current);
 
         //empties each slot
         for (int i = 0; i < slots.Count; i++)
@@ -78,13 +90,21 @@ public class ContainerScript : MonoBehaviour
         cg.alpha = 0;
         cg.interactable = false;
         cg.blocksRaycasts = false;
+
+        if(save)
+        {
+            controller.Save();
+        }
     }
 
     //Update is old word bascically just adds items to save file
     public void UpdateContainer(ItemInSlot item, int amount)
     {
-        current.ChangeItems(item, amount);
-        slots = GetComponent<BagScript>().useableSlots;
+        if(item != null && current != null)
+        {
+            current.ChangeItems(item, amount);
+            slots = GetComponent<BagScript>().useableSlots;
+        }
     }
 
 

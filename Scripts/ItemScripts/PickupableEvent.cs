@@ -7,6 +7,9 @@ public class PickupableEvent : Pickupable
     public GameObject[] activateObjects;
     public Dialogue[] dialogueToShow;
     public bool note = false;
+
+    public AIController[] aiToAgro;
+
     public override void Interact(Transform source)
     {
         if(note)
@@ -34,6 +37,14 @@ public class PickupableEvent : Pickupable
             }
         }
 
+        if (aiToAgro != null)
+        {
+            foreach (AIController ai in aiToAgro)
+            {
+                ai.Agro(source);
+            }
+        }
+
         pickedUp = true;
         base.Interact(source);
 
@@ -44,9 +55,10 @@ public class PickupableEvent : Pickupable
                 Instantiate(activateObjects[i]);
             }
         }
+
         if(dialogueToShow != null)
         {
-            source.GetComponentInChildren<DialogueHandler>().DisplayText("You",dialogueToShow );
+            source.GetComponentInChildren<DialogueHandler>().DisplayText("You", dialogueToShow);
         }
     }
 }

@@ -20,6 +20,8 @@ public class Item : ScriptableObject
     public int stackSize = 1;
 
     public Rarity rarityPreset = Rarity.Random;
+    public itemTypes itemType = itemTypes.regular;
+    public ElementTypes elementType;
 
     public virtual void Use(Stats source)
     {

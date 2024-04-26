@@ -46,6 +46,7 @@ public class Stats : MonoBehaviour
     private const float staminaRegenDelay = 2.5f;
 
     public bool innocent = false;
+    public bool dissapear = false;
     public virtual void Start()
     {
         TryGetComponent<NetworkAnimator>(out networkAnim);
@@ -358,10 +359,26 @@ public class Stats : MonoBehaviour
         //If dies
         if (health <= 0)
         {
+
+
             ContainerUnit unit;
             if(aiCont != null) //If ai dies try see if it was player and proceed quest
             {
-                 unit = gameObject.AddComponent<ContainerUnit>();
+
+                if (source.root.TryGetComponent<PlayerController>(out _))
+                {
+                    aiCont.SendMessage("Dead", transform); //Send message to all so they remove this from target
+
+                    source.root.GetComponentInChildren<PlayerQuestHandler>().TryProceedingQuest(aiCont.info);
+                }
+
+                if (dissapear)
+                {
+                    Destroy(gameObject);
+                    return;
+                }
+
+                unit = gameObject.AddComponent<ContainerUnit>();
                 unit.SetRandomItems(aiCont.info);
                 if(aiCont.aiRange != null)
                 {
@@ -373,12 +390,6 @@ public class Stats : MonoBehaviour
                 }
                 
 
-                if(source.root.TryGetComponent<PlayerController>(out _))
-                {
-                    aiCont.SendMessage("Dead", transform); //Send message to all so they remove this from target
-
-                    source.root.GetComponentInChildren<PlayerQuestHandler>().TryProceedingQuest(aiCont.info);
-                }
 
                 //If in squad add dead amount so it can be cleared
                 transform.root.TryGetComponent<SquadClearHandler>(out SquadClearHandler scl);

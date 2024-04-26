@@ -22,15 +22,18 @@ public class FarmManager : MonoBehaviour
 
     public FarmPlot FindWork()
     {
-        foreach(FarmPlot plot in farmPlots)
+        if(farmPlots != null)
         {
-            if(!plot.growing)
+            foreach (FarmPlot plot in farmPlots)
             {
-                return plot;
-            }
-            else if(plot.readyToHarvest)
-            {
-                return plot;
+                if (!plot.growing)
+                {
+                    return plot;
+                }
+                else if (plot.readyToHarvest)
+                {
+                    return plot;
+                }
             }
         }
 
